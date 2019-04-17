@@ -23,72 +23,84 @@ val toolchains = listOf(
                 "x86_64-unknown-linux-gnu",
                 "<compilerTriple>",
                 "<binutilsTriple>",
+                0,
                 "desktop/linux-x86-64"),
         Toolchain("darwin",
                 ToolchainType.DESKTOP,
                 "x86_64-apple-darwin",
                 "<compilerTriple>",
                 "<binutilsTriple>",
+                0,
                 "desktop/darwin"),
         Toolchain("win32-x86-64-msvc",
                 ToolchainType.DESKTOP,
                 "x86_64-pc-windows-msvc",
                 "<compilerTriple>",
                 "<binutilsTriple>",
+                0,
                 "desktop/win32-x86-64"),
         Toolchain("win32-x86-64-gnu",
                 ToolchainType.DESKTOP,
                 "x86_64-pc-windows-gnu",
                 "<compilerTriple>",
                 "<binutilsTriple>",
+                0,
                 "desktop/win32-x86-64"),
         Toolchain("arm",
                 ToolchainType.ANDROID_GENERATED,
                 "armv7-linux-androideabi",
                 "arm-linux-androideabi",
                 "arm-linux-androideabi",
+                16,
                 "android/armeabi-v7a"),
         Toolchain("arm64",
                 ToolchainType.ANDROID_GENERATED,
                 "aarch64-linux-android",
                 "aarch64-linux-android",
                 "aarch64-linux-android",
+                21,
                 "android/arm64-v8a"),
         Toolchain("x86",
                 ToolchainType.ANDROID_GENERATED,
                 "i686-linux-android",
                 "i686-linux-android",
                 "i686-linux-android",
+                16,
                 "android/x86"),
         Toolchain("x86_64",
                 ToolchainType.ANDROID_GENERATED,
                 "x86_64-linux-android",
                 "x86_64-linux-android",
                 "x86_64-linux-android",
+                21,
                 "android/x86_64"),
         Toolchain("arm",
                 ToolchainType.ANDROID_PREBUILT,
                 "armv7-linux-androideabi",
                 "armv7a-linux-androideabi",
                 "arm-linux-androideabi",
+                16,
                 "android/armeabi-v7a"),
         Toolchain("arm64",
                 ToolchainType.ANDROID_PREBUILT,
                 "aarch64-linux-android",
                 "aarch64-linux-android",
                 "aarch64-linux-android",
+                21,
                 "android/arm64-v8a"),
         Toolchain("x86",
                 ToolchainType.ANDROID_PREBUILT,
                 "i686-linux-android",
                 "i686-linux-android",
                 "i686-linux-android",
+                16,
                 "android/x86"),
         Toolchain("x86_64",
                 ToolchainType.ANDROID_PREBUILT,
                 "x86_64-linux-android",
                 "x86_64-linux-android",
                 "x86_64-linux-android",
+                21,
                 "android/x86_64")
 )
 
@@ -97,7 +109,21 @@ data class Toolchain(val platform: String,
                      val target: String,
                      val compilerTriple: String,
                      val binutilsTriple: String,
+                     val minApiLevel: Int,
                      val folder: String) {
+    fun apiLevel(desiredApiLevel: Int, forceArchs: Boolean): Int =
+            if (desiredApiLevel < minApiLevel) {
+                if (forceArchs) {
+                    println("Can't target ${platform} with API level < ${minApiLevel} (${desiredApiLevel})")
+                    println("Forcing API level to ${minApiLevel}")
+                    minApiLevel
+                } else {
+                    throw GradleException("Can't target ${platform} with API level < ${minApiLevel} (${desiredApiLevel})")
+                }
+            } else {
+                desiredApiLevel
+            }
+
     fun cc(apiLevel: Int): File =
             if (System.getProperty("os.name").startsWith("Windows")) {
                 if (type == ToolchainType.ANDROID_PREBUILT) {

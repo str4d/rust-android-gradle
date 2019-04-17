@@ -266,6 +266,25 @@ cargo {
 }
 ```
 
+### forceTargets
+
+If `apiLevel` is set (either explicitly or through its default) to a version that does not support
+all configured targets (because it is below the minimum API version for one or more targets), then:
+
+- When `forceTargets = true`, the API level for unsupported targets is forced to their minimum API
+  level.
+- When `forceTargets = false`, a build error occurs.
+
+If `apiLevel` is set to a version that supports all configured targets, `forceTargets` does nothing.
+
+Defaults to `false`.
+
+```groovy
+cargo {
+    forceTargets = true
+}
+```
+
 ## Specifying NDK toolchains
 
 When `prebuiltToolchains = false` or for NDK versions before 19, the plugin looks for (and will

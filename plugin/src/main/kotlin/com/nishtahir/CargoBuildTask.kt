@@ -52,7 +52,8 @@ open class CargoBuildTask : DefaultTask() {
 
     inline fun <reified T : BaseExtension> buildProjectForTarget(project: Project, toolchain: Toolchain, cargoExtension: CargoExtension) {
         val app = project.extensions[T::class]
-        val apiLevel = cargoExtension.apiLevel ?: app.defaultConfig.minSdkVersion.apiLevel
+        val desiredApiLevel = cargoExtension.apiLevel ?: app.defaultConfig.minSdkVersion.apiLevel
+        val apiLevel = toolchain.apiLevel(desiredApiLevel, cargoExtension.forceTargets)
 
         project.exec { spec ->
             if (cargoExtension.exec != null) {
