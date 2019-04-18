@@ -1,7 +1,11 @@
 package com.nishtahir
 
 import com.android.build.gradle.*
+import com.android.build.gradle.api.ApplicationVariant
+import com.android.build.gradle.api.BaseVariant
+import com.android.build.gradle.api.LibraryVariant
 import org.gradle.api.DefaultTask
+import org.gradle.api.DomainObjectSet
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -158,8 +162,10 @@ open class RustAndroidPlugin : Plugin<Project> {
             afterEvaluate {
                 plugins.all {
                     when (it) {
-                        is AppPlugin -> configurePlugin<AppExtension>(this)
-                        is LibraryPlugin -> configurePlugin<LibraryExtension>(this)
+                        is AppPlugin -> configurePlugin<AppExtension, ApplicationVariant>(
+                            this, extensions[AppExtension::class].applicationVariants)
+                        is LibraryPlugin -> configurePlugin<LibraryExtension, LibraryVariant>(
+                            this, extensions[LibraryExtension::class].libraryVariants)
                     }
                 }
             }
@@ -167,7 +173,9 @@ open class RustAndroidPlugin : Plugin<Project> {
         }
     }
 
-    private inline fun <reified T : BaseExtension> configurePlugin(project: Project) = with(project) {
+    private inline fun <reified T : BaseExtension, reified V : BaseVariant> configurePlugin(
+        project: Project, variants: DomainObjectSet<V>
+    ) = with(project) {
         cargoExtension.localProperties = Properties()
 
         val localPropertiesFile = File(project.rootDir, "local.properties")
@@ -279,6 +287,10 @@ open class RustAndroidPlugin : Plugin<Project> {
             }
             targetBuildTask.dependsOn(generateLinkerWrapper)
             buildTask.dependsOn(targetBuildTask)
+        }
+
+        variants.all { variant ->
+            tasks.getByPath("generate${variant.name.capitalize()}Assets").dependsOn(buildTask)
         }
     }
 }
