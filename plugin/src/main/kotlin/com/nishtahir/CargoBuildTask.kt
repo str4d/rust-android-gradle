@@ -29,10 +29,8 @@ open class CargoBuildTask : DefaultTask() {
                 }
             }
 
-            val targetDirectory = targetDirectory ?: "${module!!}/target"
-
             copy { spec ->
-                spec.from(File(project.projectDir, "${targetDirectory}/${toolchain.target}/${profile}"))
+                spec.from(File(project.projectDir, "${targetDirectory()}/${toolchain.target}/${profile}"))
                 spec.into(File(buildDir, "rustJniLibs/${toolchain.folder}"))
 
                 // Need to capture the value to dereference smoothly.
@@ -103,6 +101,8 @@ open class CargoBuildTask : DefaultTask() {
                     // two values.
                     theCommandLine.add("--${cargoExtension.profile}")
                 }
+
+                environment("CARGO_TARGET_DIR", cargoExtension.targetDirectory())
 
                 theCommandLine.add("--target=${toolchain.target}")
 

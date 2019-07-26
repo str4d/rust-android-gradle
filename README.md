@@ -230,7 +230,7 @@ cargo {
 
 ### targetDirectory
 
-The target directory into which Cargo writes built outputs.
+The target directory into which Cargo should write built outputs.
 
 Defaults to `${module}/target`.  `targetDirectory` is interpreted as a relative path to the Gradle
 `projectDir`.

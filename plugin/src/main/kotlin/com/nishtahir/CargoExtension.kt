@@ -54,6 +54,10 @@ open class CargoExtension {
         action.execute(featureSpec)
     }
 
+    fun targetDirectory(): String {
+        return targetDirectory ?: "${module!!}/target"
+    }
+
     val toolchainDirectory: File
         get() {
             // Share a single toolchain directory, if one is configured.  Prefer "local.properties"
