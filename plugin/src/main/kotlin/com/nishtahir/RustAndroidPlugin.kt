@@ -158,6 +158,7 @@ open class RustAndroidPlugin : Plugin<Project> {
     override fun apply(project: Project) {
         with(project) {
             cargoExtension = extensions.create("cargo", CargoExtension::class.java)
+            cargoExtension.variants = project.container(CargoOverrides::class.java)
 
             afterEvaluate {
                 plugins.all {
@@ -201,11 +202,6 @@ open class RustAndroidPlugin : Plugin<Project> {
 
         if (cargoExtension.targets == null) {
             throw GradleException("targets cannot be null")
-        }
-
-        extensions[T::class].apply {
-            sourceSets.getByName("main").jniLibs.srcDir(File("$buildDir/rustJniLibs/android"))
-            sourceSets.getByName("test").resources.srcDir(File("$buildDir/rustJniLibs/desktop"))
         }
 
         // Determine the NDK version, if present
@@ -255,7 +251,50 @@ open class RustAndroidPlugin : Plugin<Project> {
             includeEmptyDirs = false
         }
 
-        val buildTask = tasks.maybeCreate("cargoBuild",
+        // Configure builds for customized variants
+        var runDefaultBuild = false
+        variants.all { variant ->
+            if (cargoExtension.hasOverrides(variant.name)) {
+                if (cargoExtension.isEnabled(variant.name)) {
+                    configureBuild<T, V>(
+                        project,
+                        variants,
+                        generateToolchain,
+                        generateLinkerWrapper,
+                        variant)
+                }
+            } else {
+                runDefaultBuild = true
+            }
+        }
+
+        // Configure the default build if necessary
+        if (runDefaultBuild) {
+            configureBuild<T, V>(
+                project,
+                variants,
+                generateToolchain,
+                generateLinkerWrapper,
+                null)
+        }
+    }
+
+    private inline fun <reified T : BaseExtension, reified V : BaseVariant> configureBuild(
+        project: Project,
+        variants: DomainObjectSet<V>,
+        generateToolchain: GenerateToolchainsTask?,
+        generateLinkerWrapper: GenerateLinkerWrapperTask,
+        variant: V?
+    ) = with(project) {
+        val variantNameCap = variant?.name?.capitalize() ?: ""
+        val variantDir = if (variant != null) "/${variant.dirName}" else "/"
+
+        extensions[T::class].apply {
+            sourceSets.getByName(variant?.name ?: "main").jniLibs.srcDir(File("$buildDir/rustJniLibs${variantDir}/android"))
+            sourceSets.getByName("test${variantNameCap}").resources.srcDir(File("$buildDir/rustJniLibs${variantDir}/desktop"))
+        }
+
+        val buildTask = tasks.maybeCreate("cargoBuild${variantNameCap}",
                 DefaultTask::class.java).apply {
             group = RUST_TASK_GROUP
             description = "Build library (all targets)"
@@ -264,7 +303,7 @@ open class RustAndroidPlugin : Plugin<Project> {
         cargoExtension.targets!!.forEach { target ->
             val theToolchain = toolchains
                     .filter {
-                        if (usePrebuilt) {
+                        if (generateToolchain == null) {
                             it.type != ToolchainType.ANDROID_GENERATED
                         } else {
                             it.type != ToolchainType.ANDROID_PREBUILT
@@ -275,22 +314,31 @@ open class RustAndroidPlugin : Plugin<Project> {
                 throw GradleException("Target ${target} is not recognized (recognized targets: ${toolchains.map { it.platform }.sorted()}).  Check `local.properties` and `build.gradle`.")
             }
 
-            val targetBuildTask = tasks.maybeCreate("cargoBuild${target.capitalize()}",
+            val targetBuildTask = tasks.maybeCreate("cargoBuild${variantNameCap}For${target.capitalize()}",
                     CargoBuildTask::class.java).apply {
                 group = RUST_TASK_GROUP
                 description = "Build library ($target)"
                 toolchain = theToolchain
+                variantDirectory = variantDir
             }
 
-            if (!usePrebuilt) {
-                targetBuildTask.dependsOn(generateToolchain!!)
+            if (generateToolchain != null) {
+                targetBuildTask.dependsOn(generateToolchain)
             }
             targetBuildTask.dependsOn(generateLinkerWrapper)
             buildTask.dependsOn(targetBuildTask)
         }
 
-        variants.all { variant ->
-            tasks.getByPath("generate${variant.name.capitalize()}Assets").dependsOn(buildTask)
+        if (variant != null) {
+            // This is a specific variant
+            tasks.getByPath("generate${variantNameCap}Assets").dependsOn(buildTask)
+        } else {
+            // This is the generic build for uncustomized variants
+            variants.all {
+                if (!cargoExtension.hasOverrides(it.name)) {
+                    tasks.getByPath("generate${it.name.capitalize()}Assets").dependsOn(buildTask)
+                }
+            }
         }
     }
 }

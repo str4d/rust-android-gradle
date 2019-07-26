@@ -11,6 +11,7 @@ import java.io.File
 
 open class CargoBuildTask : DefaultTask() {
     var toolchain: Toolchain? = null
+    var variantDirectory: String? = null
 
     @Suppress("unused")
     @TaskAction
@@ -30,8 +31,8 @@ open class CargoBuildTask : DefaultTask() {
             }
 
             copy { spec ->
-                spec.from(File(project.projectDir, "${targetDirectory()}/${toolchain.target}/${profile}"))
-                spec.into(File(buildDir, "rustJniLibs/${toolchain.folder}"))
+                spec.from(File(project.projectDir, "${targetDirectory()}${variantDirectory}/${toolchain.target}/${profile}"))
+                spec.into(File(buildDir, "rustJniLibs${variantDirectory}/${toolchain.folder}"))
 
                 // Need to capture the value to dereference smoothly.
                 val targetIncludes = targetIncludes
@@ -102,7 +103,7 @@ open class CargoBuildTask : DefaultTask() {
                     theCommandLine.add("--${cargoExtension.profile}")
                 }
 
-                environment("CARGO_TARGET_DIR", cargoExtension.targetDirectory())
+                environment("CARGO_TARGET_DIR", "${cargoExtension.targetDirectory()}${variantDirectory}")
 
                 theCommandLine.add("--target=${toolchain.target}")
 

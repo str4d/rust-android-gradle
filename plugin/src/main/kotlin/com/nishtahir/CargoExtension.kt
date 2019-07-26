@@ -1,6 +1,8 @@
 package com.nishtahir
 
+import groovy.lang.Closure
 import org.gradle.api.Action
+import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
 import org.gradle.process.ExecSpec
 import java.io.File
@@ -28,6 +30,12 @@ data class FeatureSpec(var features: Features? = null) {
     }
 }
 
+open class CargoOverrides(nameIn: String) {
+    val name: String = nameIn
+
+    var enabled: Boolean? = null
+}
+
 // `CargoExtension` is documented in README.md.
 open class CargoExtension {
     lateinit var localProperties: Properties
@@ -52,6 +60,31 @@ open class CargoExtension {
 
     fun features(action: Action<FeatureSpec>) {
         action.execute(featureSpec)
+    }
+
+    lateinit var variants: NamedDomainObjectContainer<CargoOverrides>
+
+    fun variants(configureClosure: Closure<Any>) {
+        variants.configure(configureClosure)
+    }
+
+    fun hasOverrides(variantName: String): Boolean {
+        for (variant in variants) {
+            if (variant.name == variantName) {
+                return true
+            }
+        }
+        return false
+    }
+
+    fun isEnabled(variantName: String): Boolean {
+        val defaultEnabled = true
+        for (variant in variants) {
+            if (variant.name == variantName) {
+                return variant.enabled ?: defaultEnabled
+            }
+        }
+        return defaultEnabled
     }
 
     fun targetDirectory(): String {

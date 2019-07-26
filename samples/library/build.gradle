@@ -62,6 +62,15 @@ cargo {
     exec = { spec, toolchain ->
         spec.environment("TEST", "test")
     }
+
+    variants {
+        legacyDebug {
+            enabled = false
+        }
+        standardDebug {
+            enabled = true
+        }
+    }
 }
 
 repositories {

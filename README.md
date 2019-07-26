@@ -285,6 +285,25 @@ cargo {
 }
 ```
 
+### variants
+
+Some settings can be configured on a per-variant level. Currently-supported settings:
+
+- TODO
+
+Each configured variant has an `enabled` setting, which can be set to `false` to disable Rust
+entirely for that variant.
+
+```groovy
+cargo {
+    variants {
+        legacyDebug {
+            enabled = false
+        }
+    }
+}
+```
+
 ## Specifying NDK toolchains
 
 When `prebuiltToolchains = false` or for NDK versions before 19, the plugin looks for (and will
