@@ -34,6 +34,19 @@ open class CargoOverrides(nameIn: String) {
     val name: String = nameIn
 
     var enabled: Boolean? = null
+    var features: Features? = null
+
+    fun allFeatures() {
+        this.features = Features.All()
+    }
+
+    fun defaultFeaturesAnd(featureSet: Array<String>) {
+        this.features = Features.DefaultAnd(featureSet.toSet())
+    }
+
+    fun noDefaultFeaturesBut(featureSet: Array<String>) {
+        this.features = Features.NoDefaultBut(featureSet.toSet())
+    }
 }
 
 // `CargoExtension` is documented in README.md.
@@ -85,6 +98,15 @@ open class CargoExtension {
             }
         }
         return defaultEnabled
+    }
+
+    fun configuredFeatures(variantName: String): Features? {
+        for (variant in variants) {
+            if (variant.name == variantName) {
+                return variant.features ?: featureSpec.features
+            }
+        }
+        return featureSpec.features
     }
 
     fun targetDirectory(): String {

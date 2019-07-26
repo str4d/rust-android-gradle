@@ -289,7 +289,10 @@ cargo {
 
 Some settings can be configured on a per-variant level. Currently-supported settings:
 
-- TODO
+- Features, via three equivalent settings
+  - allFeatures()
+  - defaultFeaturesAnd(...)
+  - noDefaultFeaturesBut(...)
 
 Each configured variant has an `enabled` setting, which can be set to `false` to disable Rust
 entirely for that variant.

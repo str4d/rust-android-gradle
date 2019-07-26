@@ -11,6 +11,7 @@ import java.io.File
 
 open class CargoBuildTask : DefaultTask() {
     var toolchain: Toolchain? = null
+    var variantName: String? = null
     var variantDirectory: String? = null
 
     @Suppress("unused")
@@ -71,7 +72,7 @@ open class CargoBuildTask : DefaultTask() {
                     theCommandLine.add("--verbose")
                 }
 
-                val features = cargoExtension.featureSpec.features
+                val features = cargoExtension.configuredFeatures(variantName ?: "")
                 // We just pass this along to cargo as something space separated... AFAICT
                 // you're allowed to have featureSpec with spaces in them, but I don't think
                 // there's a way to specify them in the cargo command line -- rustc accepts

@@ -54,9 +54,7 @@ cargo {
     libname = "librust"
 
     features {
-        defaultAnd "foo", "bar"
-        noDefaultBut("foo", "bar")
-        all()
+        defaultAnd "bar"
     }
 
     exec = { spec, toolchain ->
@@ -69,6 +67,7 @@ cargo {
         }
         standardDebug {
             enabled = true
+            noDefaultFeaturesBut("bar")
         }
     }
 }

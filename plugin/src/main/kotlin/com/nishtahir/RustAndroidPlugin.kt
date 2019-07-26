@@ -319,6 +319,7 @@ open class RustAndroidPlugin : Plugin<Project> {
                 group = RUST_TASK_GROUP
                 description = "Build library ($target)"
                 toolchain = theToolchain
+                variantName = variant?.name
                 variantDirectory = variantDir
             }
 
